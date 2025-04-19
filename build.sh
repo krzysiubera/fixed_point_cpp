@@ -14,7 +14,7 @@ function build {
 
 function run {
     echo "Running..."
-    $BUILD_DIR/fixed-point-c
+    $BUILD_DIR/fixed-point-cpp
 }
 
 function clean {
