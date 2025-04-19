@@ -10,7 +10,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # add the executable target
-add_executable(fixed-point-cpp src/main.cpp)
+add_executable(fixed-point-cpp src/test_fixed_point.cpp)
 
 # enable debug symbols (like '-g') and all warnings
 target_compile_options(fixed-point-cpp PRIVATE -g -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Werror)

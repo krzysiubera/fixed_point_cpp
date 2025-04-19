@@ -74,7 +74,13 @@ public:
 
     // constructor from int
     template<std::integral T>
-    constexpr Number(T i) noexcept : value_{static_cast<IntType>(i) << kFracBits} {}
+    constexpr Number(T i) noexcept : value_{static_cast<IntType>(static_cast<XLType>(i) << kFracBits)} {}
+
+    // getter for integer part
+    [[nodiscard]] constexpr IntType IntPart() const noexcept
+    {
+        return value_ >> kFracBits;
+    }
 
     // conversion to float 
     [[nodiscard]] constexpr explicit operator float() const noexcept
@@ -194,7 +200,9 @@ public:
     {
         if constexpr (kIsSigned)
         {
-            return FromRaw(SignBit(a) ? -a.value_ : a.value_);
+            const XLType raw_val = static_cast<XLType>(a.value_);
+            const XLType abs_val = SignBit(a) ? -raw_val : raw_val;
+            return FromRaw(static_cast<IntType>(abs_val));
         }
         else
         {
