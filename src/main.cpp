@@ -28,18 +28,11 @@ public:
     static constexpr bool kIsSigned {std::is_signed_v<IntType>};
     static constexpr std::size_t kNumBits {sizeof(IntType) * 8};
     static constexpr std::size_t kFracBits {kNumBits - IntBits};
-    static constexpr IntType kScaleFactor {static_cast<IntType>(1) << kFracBits};
+    static constexpr IntType kScaleFactor {static_cast<IntType>(static_cast<XLType>(1) << kFracBits)};
     static constexpr IntType kIntMask {((static_cast<IntType>(1) << IntBits) - 1) << kFracBits};
     static constexpr IntType kFracMask {(static_cast<IntType>(1) << kFracBits) - 1};
 
-    // factory methods for raw/scaled construction
-    [[nodiscard]] static constexpr Number FromInt(IntType raw) noexcept
-    {
-        Number result;
-        result.value_ = raw << kFracBits;
-        return result;
-    }
-
+    // factory method for number construction
     [[nodiscard]] static constexpr Number FromRaw(IntType raw) noexcept
     {
         Number result;
@@ -50,7 +43,7 @@ public:
     // constants
     static constexpr Number Zero() noexcept
     {
-        return FromInt(0);
+        return FromRaw(0);
     }
 
     static constexpr Number Half() noexcept
@@ -65,27 +58,20 @@ public:
 
     static constexpr Number NegOne() noexcept
     {
-        if constexpr (std::is_signed_v<IntType>)
-        {
-            return FromRaw(-kScaleFactor);
-        }
-        else
-        {
-            // for unsigned integer negative one doesn't exist - return zero instead
-            return Zero();
-        }
+        static_assert(kIsSigned, "NegOne() doesn't exist for unsigned fixed point types");
+        return FromRaw(-kScaleFactor);
     }
 
-    // constructors
+    // default constructor
     constexpr explicit Number() noexcept : value_{0} {};
 
-    // convert from floating point
+    // constructor from float
     constexpr explicit Number(float f) noexcept: value_{static_cast<IntType>(f * kScaleFactor)} {};
 
-    // convert from double
+    // constructor from double
     constexpr explicit Number(double d) noexcept: value_{static_cast<IntType>(d * kScaleFactor)} {};
 
-    // automatic conversions from integers
+    // constructor from int
     template<std::integral T>
     constexpr Number(T i) noexcept : value_{static_cast<IntType>(i) << kFracBits} {}
 
@@ -104,15 +90,8 @@ public:
     // negation operator
     [[nodiscard]] constexpr Number operator-() const noexcept
     {
-        if constexpr (kIsSigned)
-        {
-            return FromRaw(-value_);
-        }
-        else
-        {
-            // for unsigned types, negation is not defined - return zero instead
-            return Zero();
-        }
+        static_assert(kIsSigned, "Negation operator is not supported for unsigned fixed point types");
+        return FromRaw(-value_);
     }
 
     // addition operator
@@ -234,7 +213,7 @@ private:
 };
 
 using S32_14 = Number<std::int32_t, 14>;
-using U32_14 = Number<std::int32_t, 14>;
+using U32_14 = Number<std::uint32_t, 14>;
 
 // Stream operator for convenient printing
 template <Integral IntType, size_t IntBits>
