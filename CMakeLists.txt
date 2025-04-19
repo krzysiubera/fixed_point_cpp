@@ -9,15 +9,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # export compile_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# add the executable target
+add_executable(fixed-point-cpp src/main.cpp)
+
 # enable debug symbols (like '-g') and all warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Werror")
+target_compile_options(fixed-point-cpp PRIVATE -g -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Werror)
 
-# define the executable
-set(SRC_FILES src/main.cpp)
-add_executable(fixed-point-cpp ${SRC_FILES})
-
-# link math library
-target_link_libraries(fixed-point-cpp m)
+# include directory for fixed point math lib
+target_include_directories(fixed-point-cpp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/fixed_point)
 
 # custom 'run' target
 add_custom_target(run 
