@@ -74,7 +74,7 @@ public:
 
     // constructor from int
     template<std::integral T>
-    constexpr Number(T i) noexcept : value_{static_cast<IntType>(static_cast<XLType>(i) << kFracBits)} {}
+    constexpr explicit Number(T i) noexcept : value_{static_cast<IntType>(static_cast<XLType>(i) << kFracBits)} {}
 
     // getter for integer part
     [[nodiscard]] constexpr IntType IntPart() const noexcept
