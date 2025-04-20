@@ -46,8 +46,18 @@ public:
     static constexpr std::size_t kNumBits {sizeof(IntType) * 8};
     static constexpr std::size_t kFracBits {kNumBits - IntBits};
     static constexpr IntType kScaleFactor {static_cast<IntType>(static_cast<XLType>(1) << kFracBits)};
-    static constexpr IntType kIntMask {((static_cast<IntType>(1) << IntBits) - 1) << kFracBits};
-    static constexpr IntType kFracMask {(static_cast<IntType>(1) << kFracBits) - 1};
+
+    // getter for integer part bits
+    [[nodiscard]] static constexpr IntType IntMask() noexcept
+    {
+        return ((static_cast<IntType>(1) << IntBits) - 1) << kFracBits;
+    }
+
+    // getter for fractional part bits
+    [[nodiscard]] static constexpr IntType FracMask() noexcept
+    {
+        return (static_cast<IntType>(1) << kFracBits) - 1;
+    }
 
     // factory method for number construction
     [[nodiscard]] static constexpr Number FromBits(IntType raw) noexcept
@@ -101,7 +111,7 @@ public:
     // getter for fractional part
     [[nodiscard]] friend constexpr auto FracPart(const Number& a) noexcept
     {
-        return FromBits(Abs(a).value_ & kFracMask);
+        return FromBits(Abs(a).value_ & FracMask());
     }
 
     // conversion to float 
