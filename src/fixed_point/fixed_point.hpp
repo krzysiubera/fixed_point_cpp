@@ -50,7 +50,7 @@ public:
     static constexpr IntType kFracMask {(static_cast<IntType>(1) << kFracBits) - 1};
 
     // factory method for number construction
-    [[nodiscard]] static constexpr Number FromRaw(IntType raw) noexcept
+    [[nodiscard]] static constexpr Number FromBits(IntType raw) noexcept
     {
         Number result;
         result.value_ = raw;
@@ -60,23 +60,23 @@ public:
     // constants
     static constexpr Number Zero() noexcept
     {
-        return FromRaw(0);
+        return FromBits(0);
     }
 
     static constexpr Number Half() noexcept
     {
-        return FromRaw(static_cast<IntType>(1) << (kFracBits - 1));
+        return FromBits(static_cast<IntType>(1) << (kFracBits - 1));
     }
 
     static constexpr Number PosOne() noexcept
     {
-        return FromRaw(kScaleFactor);
+        return FromBits(kScaleFactor);
     }
 
     static constexpr Number NegOne() noexcept
     {
         static_assert(kIsSigned, "NegOne() doesn't exist for unsigned fixed point types");
-        return FromRaw(-kScaleFactor);
+        return FromBits(-kScaleFactor);
     }
 
     // default constructor
@@ -98,6 +98,12 @@ public:
         return value_ >> kFracBits;
     }
 
+    // getter for fractional part
+    [[nodiscard]] friend constexpr auto FracPart(const Number& a) noexcept
+    {
+        return FromBits(Abs(a).value_ & kFracMask);
+    }
+
     // conversion to float 
     [[nodiscard]] constexpr explicit operator float() const noexcept
     {
@@ -114,19 +120,19 @@ public:
     [[nodiscard]] constexpr Number operator-() const noexcept
     {
         static_assert(kIsSigned, "Negation operator is not supported for unsigned fixed point types");
-        return FromRaw(-value_);
+        return FromBits(-value_);
     }
 
     // addition operator
     [[nodiscard]] constexpr Number operator+(const Number & other) const noexcept
     {
-        return FromRaw(value_ + other.value_);
+        return FromBits(value_ + other.value_);
     }
 
     // subtraction operator
     [[nodiscard]] constexpr Number operator-(const Number & other) const noexcept
     {
-        return FromRaw(value_ - other.value_);
+        return FromBits(value_ - other.value_);
     }
 
     // multiplication operator
@@ -134,7 +140,7 @@ public:
     {
         const auto this_val = static_cast<XLType>(value_);
         const auto other_val = static_cast<XLType>(other.value_);
-        return FromRaw(static_cast<IntType>((this_val * other_val) >> kFracBits));
+        return FromBits(static_cast<IntType>((this_val * other_val) >> kFracBits));
     }
 
     // division operator
@@ -142,7 +148,7 @@ public:
     {
         const auto this_xl_val = static_cast<XLType>(value_) << kFracBits;
         const auto other_xl_val = static_cast<XLType>(other.value_);
-        return FromRaw(static_cast<IntType>(this_xl_val / other_xl_val));
+        return FromBits(static_cast<IntType>(this_xl_val / other_xl_val));
     }
 
     // increment operator
@@ -218,19 +224,13 @@ public:
         {
             const XLType raw_val = static_cast<XLType>(a.value_);
             const XLType abs_val = SignBit(a) ? -raw_val : raw_val;
-            return FromRaw(static_cast<IntType>(abs_val));
+            return FromBits(static_cast<IntType>(abs_val));
         }
         else
         {
             // for unsigned types abs is identity
             return a;
         }
-    }
-
-    // fractional part
-    friend constexpr auto Frac(const Number& a) noexcept
-    {
-        return FromRaw(Abs(a).value_ & kFracMask);
     }
 
 private:

@@ -70,7 +70,7 @@ constexpr bool TestDivision()
 constexpr bool TestFractionalPart()
 {
     auto a = FP_S32_16(3.75);
-    auto f = Frac(a);
+    auto f = FracPart(a);
     return static_cast<float>(f) > 0.74f && static_cast<float>(f) < 0.76f;
 }
 
@@ -131,7 +131,7 @@ static_assert(TestAddition(), "Addition failed");
 static_assert(TestSubtraction(), "Subtraction failed");
 static_assert(TestMultiplication(), "Multiplication failed");
 static_assert(TestDivision(), "Division failed");
-static_assert(TestFractionalPart(), "Frac() failed");
+static_assert(TestFractionalPart(), "FracPart() failed");
 static_assert(TestAbsSigned(), "Signed Abs() failed");
 static_assert(TestAbsUnsigned(), "Unsigned Abs() failed");
 static_assert(TestSignBitSignedPositive(), "SignBit() with a signed positive integer failed");
