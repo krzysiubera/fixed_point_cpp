@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <concepts>
 #include <iostream>
+#include <limits>
 
 namespace fp
 {
@@ -12,19 +13,34 @@ namespace fp
 template<typename T>
 concept Integral = std::is_integral_v<T>;
 
+/// @brief Concept: T1 and T2 have the same signedness
+template<typename T1, typename T2>
+concept SameSignedness = (std::is_signed_v<T1> == std::is_signed_v<T2>);
+
+/// @brief Concept: T1 is strictly larger in size than T2
+template<typename T1, typename T2>
+concept XLargerThan = (sizeof(T1) > sizeof(T2));
+
+/// @brief Concept: IntBits must be less than the number of value bits in T
+template<typename T, std::size_t IntBits>
+concept ValidIntBits = (IntBits < std::numeric_limits<T>::digits);
+
+/// @brief Concept: T must not exceed 64 bits
+template<typename T>
+concept Max64Bits = (std::numeric_limits<T>::digits <= 64);
+
 /**
  * @brief A fixed-point number class template. Supports both signed and unsigned integer types.
  * 
  * @tparam IntType The base integer type to use (e.g., std::int32_t, std::uint32_t).
+ * @tparam XLType The integer type to perform intermediate calculations.
  * @tparam IntBits Number of bits to use for the integer part.
  */
-template<Integral IntType, std::size_t IntBits>
+template<Integral IntType, Integral XLType, std::size_t IntBits>
+requires SameSignedness<IntType, XLType> && XLargerThan<XLType, IntType> && ValidIntBits<IntType, IntBits> && Max64Bits<XLType>
 class Number
 {
 public:
-    // for now assume that std::int32_t/std::uint32_t are max possible IntType
-    using XLType = std::conditional_t<std::is_signed_v<IntType>, std::int64_t, std::uint64_t>;
-
     // variables describing the fixed point number representation
     static constexpr bool kIsSigned {std::is_signed_v<IntType>};
     static constexpr std::size_t kNumBits {sizeof(IntType) * 8};
@@ -222,8 +238,8 @@ private:
 };
 
 // Stream operator for convenient printing
-template <Integral IntType, size_t IntBits>
-std::ostream& operator<<(std::ostream& os, const Number<IntType, IntBits>& fp) 
+template <Integral IntType, Integral XLType, size_t IntBits>
+std::ostream& operator<<(std::ostream& os, const Number<IntType, XLType, IntBits>& fp) 
 {
     os << static_cast<double>(fp);
     return os;

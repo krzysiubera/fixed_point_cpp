@@ -1,7 +1,7 @@
 #include "fixed_point.hpp"
 
-using FP_S32_16 = fp::Number<std::int32_t, 16>;
-using FP_U32_16 = fp::Number<std::uint32_t, 16>;
+using FP_S32_16 = fp::Number<std::int32_t, std::int64_t, 16>;
+using FP_U32_16 = fp::Number<std::uint32_t, std::uint64_t, 16>;
 
 // compile-time test cases
 constexpr bool TestConstructionSignedFromInt()
