@@ -24,7 +24,7 @@ constexpr bool TestConstructionSignedFromFloat()
 
 constexpr bool TestConstructionUnsignedFromFloat()
 {
-    auto a = FP_S32_16(1.5f);
+    auto a = FP_U32_16(1.5f);
     return static_cast<float>(a) > 1.4f && static_cast<float>(a) < 1.6f;
 }
 
