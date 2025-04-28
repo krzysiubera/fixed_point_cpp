@@ -19,11 +19,11 @@ concept SameSignedness = (std::is_signed_v<T1> == std::is_signed_v<T2>);
 
 /// @brief Concept: T1 is strictly larger in size than T2
 template<typename T1, typename T2>
-concept XLargerThan = (sizeof(T1) > sizeof(T2));
+concept LargerThan = (sizeof(T1) > sizeof(T2));
 
-/// @brief Concept: IntBits must be less than the number of value bits in T
-template<typename T, std::size_t IntBits>
-concept ValidIntBits = (IntBits < std::numeric_limits<T>::digits);
+/// @brief Concept: NumIntBits must be less than the number of value bits in T
+template<typename T, std::size_t NumIntBits>
+concept ValidIntBits = (NumIntBits < std::numeric_limits<T>::digits);
 
 /// @brief Concept: T must not exceed 64 bits
 template<typename T>
@@ -33,30 +33,30 @@ concept Max64Bits = (std::numeric_limits<T>::digits <= 64);
  * @brief A fixed-point number class template. Supports both signed and unsigned integer types.
  * 
  * @tparam IntType The base integer type to use (e.g., std::int32_t, std::uint32_t).
- * @tparam XLType The integer type to perform intermediate calculations.
- * @tparam IntBits Number of bits to use for the integer part.
+ * @tparam WideType The integer type to perform intermediate calculations.
+ * @tparam NumIntBits Number of bits to use for the integer part.
  */
-template<Integral IntType, Integral XLType, std::size_t IntBits>
-requires SameSignedness<IntType, XLType> && XLargerThan<XLType, IntType> && ValidIntBits<IntType, IntBits> && Max64Bits<XLType>
+template<Integral IntType, Integral WideType, std::size_t NumIntBits>
+requires SameSignedness<IntType, WideType> && LargerThan<WideType, IntType> && ValidIntBits<IntType, NumIntBits> && Max64Bits<WideType>
 class Number
 {
 public:
     // variables describing the fixed point number representation
     static constexpr bool kIsSigned {std::is_signed_v<IntType>};
     static constexpr std::size_t kNumBits {sizeof(IntType) * 8};
-    static constexpr std::size_t kFracBits {kNumBits - IntBits};
-    static constexpr IntType kScaleFactor {static_cast<IntType>(static_cast<XLType>(1) << kFracBits)};
+    static constexpr std::size_t kNumFracBits {kNumBits - NumIntBits};
+    static constexpr IntType kScaleFactor {static_cast<IntType>(static_cast<WideType>(1) << kNumFracBits)};
 
     // getter for integer part bits
     [[nodiscard]] static constexpr IntType IntMask() noexcept
     {
-        return ((static_cast<IntType>(1) << IntBits) - 1) << kFracBits;
+        return ((static_cast<IntType>(1) << NumIntBits) - 1) << kNumFracBits;
     }
 
     // getter for fractional part bits
     [[nodiscard]] static constexpr IntType FracMask() noexcept
     {
-        return (static_cast<IntType>(1) << kFracBits) - 1;
+        return (static_cast<IntType>(1) << kNumFracBits) - 1;
     }
 
     // factory method for number construction
@@ -75,7 +75,7 @@ public:
 
     static constexpr Number Half() noexcept
     {
-        return FromBits(static_cast<IntType>(1) << (kFracBits - 1));
+        return FromBits(static_cast<IntType>(1) << (kNumFracBits - 1));
     }
 
     static constexpr Number PosOne() noexcept
@@ -100,12 +100,12 @@ public:
 
     // constructor from int
     template<std::integral T>
-    constexpr explicit Number(T i) noexcept : value_{static_cast<IntType>(static_cast<XLType>(i) << kFracBits)} {}
+    constexpr explicit Number(T i) noexcept : value_{static_cast<IntType>(static_cast<WideType>(i) << kNumFracBits)} {}
 
     // getter for integer part
     [[nodiscard]] constexpr IntType IntPart() const noexcept
     {
-        return value_ >> kFracBits;
+        return value_ >> kNumFracBits;
     }
 
     // getter for fractional part
@@ -148,17 +148,17 @@ public:
     // multiplication operator
     [[nodiscard]] constexpr Number operator*(const Number & other) const noexcept
     {
-        const auto this_val = static_cast<XLType>(value_);
-        const auto other_val = static_cast<XLType>(other.value_);
-        return FromBits(static_cast<IntType>((this_val * other_val) >> kFracBits));
+        const auto this_val = static_cast<WideType>(value_);
+        const auto other_val = static_cast<WideType>(other.value_);
+        return FromBits(static_cast<IntType>((this_val * other_val) >> kNumFracBits));
     }
 
     // division operator
     [[nodiscard]] constexpr Number operator/(const Number& other) const noexcept 
     {
-        const auto this_xl_val = static_cast<XLType>(value_) << kFracBits;
-        const auto other_xl_val = static_cast<XLType>(other.value_);
-        return FromBits(static_cast<IntType>(this_xl_val / other_xl_val));
+        const auto this_wide_val = static_cast<WideType>(value_) << kNumFracBits;
+        const auto other_wide_val = static_cast<WideType>(other.value_);
+        return FromBits(static_cast<IntType>(this_wide_val / other_wide_val));
     }
 
     // increment operator
@@ -178,18 +178,18 @@ public:
     // multiplication assignment operator
     constexpr Number& operator*=(const Number & other) noexcept
     {
-        const auto this_xl_val = static_cast<XLType>(value_);
-        const auto other_xl_val = static_cast<XLType>(other.value_);
-        value_ = static_cast<IntType>((this_xl_val * other_xl_val) >> kFracBits);
+        const auto this_wide_val = static_cast<WideType>(value_);
+        const auto other_wide_val = static_cast<WideType>(other.value_);
+        value_ = static_cast<IntType>((this_wide_val * other_wide_val) >> kNumFracBits);
         return *this;
     }
 
     // division assignment operator
     constexpr Number& operator/=(const Number & other) noexcept
     {
-        const auto this_xl_val = static_cast<XLType>(value_) << kFracBits;
-        const auto other_xl_val = static_cast<XLType>(other.value_);
-        value_ = static_cast<IntType>(this_xl_val / other_xl_val);
+        const auto this_wide_val = static_cast<WideType>(value_) << kNumFracBits;
+        const auto other_wide_val = static_cast<WideType>(other.value_);
+        value_ = static_cast<IntType>(this_wide_val / other_wide_val);
         return *this;
     }
 
@@ -232,8 +232,8 @@ public:
     {
         if constexpr (kIsSigned)
         {
-            const XLType raw_val = static_cast<XLType>(a.value_);
-            const XLType abs_val = SignBit(a) ? -raw_val : raw_val;
+            const auto raw_val = static_cast<WideType>(a.value_);
+            const auto abs_val = SignBit(a) ? -raw_val : raw_val;
             return FromBits(static_cast<IntType>(abs_val));
         }
         else
@@ -248,8 +248,8 @@ private:
 };
 
 // Stream operator for convenient printing
-template <Integral IntType, Integral XLType, size_t IntBits>
-std::ostream& operator<<(std::ostream& os, const Number<IntType, XLType, IntBits>& fp) 
+template <Integral IntType, Integral WideType, size_t NumIntBits>
+std::ostream& operator<<(std::ostream& os, const Number<IntType, WideType, NumIntBits>& fp) 
 {
     os << static_cast<double>(fp);
     return os;
